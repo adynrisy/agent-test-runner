@@ -1,0 +1,1 @@
+{"description":"Scheduled verified-run worker: claims queued test-run requests, runs the agent pipeline, and marks runs verified.","engines":{"node":">=20"},"name":"agent-test-runner","private":true,"scripts":{"check":"node --check runner.mjs","start":"node runner.mjs"},"type":"module","version":"1.0.0"}

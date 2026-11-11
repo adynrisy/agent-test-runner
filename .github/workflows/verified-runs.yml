@@ -1,0 +1,51 @@
+# Verified runs — every 10 minutes, one queued request per run.
+#
+# The app never holds a token for this repo and never calls GitHub.
+# A verified run is triggered by a database row only
+# (beta_run_requests, status queued); this workflow polls that table
+# on a schedule, claims one row, runs it, and marks it complete or
+# failed. Nothing here deploys, posts, approves, or publishes.
+#
+# Secrets (repository Settings > Secrets and variables > Actions):
+#   SUPABASE_URL          — the database's REST URL
+#   SUPABASE_SERVICE_KEY  — the service key (bypasses RLS by design;
+#                           the runner enforces the run invariants in
+#                           code — see runner.mjs)
+#   RUNNER_PRIVATE_KEY    — the RSA private key (PKCS8 PEM) matching
+#                           the public key embedded in the app
+#
+# Minutes math: this is a PUBLIC repo, so Actions minutes are
+# unlimited and the 10-minute poll costs nothing. (For reference
+# only: on a private repo the same cadence would cost ~4,320 billed
+# minutes/month of polling alone — do not design for private.)
+
+name: verified-runs
+
+on:
+  schedule:
+    # Every 10 minutes.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verified-runs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run one queued verified run
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
+        run: node runner.mjs

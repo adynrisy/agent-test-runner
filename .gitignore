@@ -1,0 +1,5 @@
+# Never commit a private key. The runner private key
+# (RUNNER_PRIVATE_KEY) lives only as a GitHub repo secret and, briefly,
+# as a local .pem on the machine that generated it — delete that file
+# after pasting the secret (see README §2 / REPORT.md step 2).
+*.pem
